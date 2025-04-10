@@ -6,6 +6,9 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface ExchangeRateApi {
+    @GET("currencies")
+    fun getCurrencies(): Call<Map<String, String>>
+
     @GET("latest")
     fun getExchangeRates(
         @Query("from") from: String = "EUR"

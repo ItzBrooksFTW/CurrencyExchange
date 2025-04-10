@@ -2,6 +2,7 @@ package com.example.currencyexchange.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.example.currencyexchange.ExchangeRateApi
 import com.example.currencyexchange.data.ExchangeRates
 import com.google.gson.Gson
@@ -10,10 +11,8 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.Callback
 import retrofit2.converter.gson.GsonConverterFactory
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import androidx.core.content.edit
+import com.google.gson.reflect.TypeToken
 import java.util.concurrent.TimeUnit
 
 class CurrencyConverter(context: Context) {
@@ -27,7 +26,37 @@ class CurrencyConverter(context: Context) {
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("exchange_rates", Context.MODE_PRIVATE)
     private val gson = Gson()
 
-    fun convertCurrency(base: String, target: String, amount: Double, callback: (Double?) -> Unit) {
+
+    fun fetchCurrencies(callback: (Map<String, String>?) -> Unit) {
+        val cachedCurrenciesJson = sharedPreferences.getString("cached_currencies", null)
+        if (cachedCurrenciesJson != null) {
+            val type = object : TypeToken<Map<String, String>>() {}.type
+            val cachedCurrencies: Map<String, String> = gson.fromJson(cachedCurrenciesJson, type)
+            callback(cachedCurrencies)
+            return
+        }
+
+        api.getCurrencies().enqueue(object : Callback<Map<String, String>> {
+            override fun onResponse(call: Call<Map<String, String>>, response: Response<Map<String, String>>) {
+                if (response.isSuccessful) {
+                    val currencies = response.body()
+                    sharedPreferences.edit {
+                        putString("cached_currencies", gson.toJson(currencies))
+                    }
+                    Log.d("nista", "nista")
+                    callback(currencies)
+                } else {
+                    callback(null)
+                }
+            }
+
+            override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
+                callback(null)
+            }
+        })
+    }
+
+    fun convertCurrency(base: String, target: String, amount: Double, callback: (Double?, Double?) -> Unit) {
         val currentTime = System.currentTimeMillis()
         val cachedRatesJson = sharedPreferences.getString("cached_rates", null)
         val lastFetchedTime = sharedPreferences.getLong("last_fetched_time", 0)
@@ -36,7 +65,7 @@ class CurrencyConverter(context: Context) {
             val cachedRates = gson.fromJson(cachedRatesJson, ExchangeRates::class.java)
             if (cachedRates.base == base) {
                 val rate = cachedRates.rates[target]
-                callback(rate?.times(amount))
+                callback(rate?.times(amount), rate)
                 return
             }
         } else {
@@ -50,15 +79,17 @@ class CurrencyConverter(context: Context) {
                             putLong("last_fetched_date", currentTime)
                         }
                         val rate = rates?.rates?.get(target)
-                        callback(rate?.times(amount))
+                        callback(rate?.times(amount), rate)
                     } else {
-                        callback(null)
+                        callback(null, null)
                     }
                 }
 
                 override fun onFailure(call: Call<ExchangeRates>, t: Throwable) {
-                    callback(null)
+                    callback(null, null)
                 }
             })
         }
-    }}
+    }
+
+}
