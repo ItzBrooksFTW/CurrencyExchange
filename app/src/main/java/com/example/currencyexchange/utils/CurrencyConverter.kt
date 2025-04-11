@@ -55,6 +55,10 @@ class CurrencyConverter(context: Context) {
             }
         })
     }
+    fun convertCustomCurrency(amount: Double, customRate: Double?) :Double {
+        val rate = customRate ?: 1.0
+        return rate.times(amount)
+    }
 
     fun convertCurrency(base: String, target: String, amount: Double, callback: (Double?, Double?) -> Unit) {
         val currentTime = System.currentTimeMillis()

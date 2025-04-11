@@ -16,11 +16,19 @@ data class CurrencyItem(
     val countryCode: String
 
 )
-
+data class CustomCurrency(
+    val code: String,
+    val name: String,
+    val customRate: Double
+)
 class CurrencySpinnerAdapter(
     context: Context,
     private val items: List<CurrencyItem>
 ) : ArrayAdapter<CurrencyItem>(context, R.layout.item_currency_spinner, items) {
+
+    fun getPositionByCode(code: String): Int {
+        return items.indexOfFirst { it.code == code }
+    }
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         return createView(position, convertView, parent)
@@ -31,19 +39,33 @@ class CurrencySpinnerAdapter(
     }
 
     private fun createView(position: Int, convertView: View?, parent: ViewGroup): View {
+
         val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_currency_spinner, parent, false)
+
+
         val item = items[position]
 
         val flagImageView = view.findViewById<ImageView>(R.id.flagImageView)
         val currencyTextView = view.findViewById<TextView>(R.id.currencyTextView)
 
-        // Load flag icon using Glide
-        val flagUrl = "https://flagcdn.com/w320/${item.countryCode}.png"
-        Glide.with(context).load(flagUrl).into(flagImageView)
 
-        // Set currency name
-        currencyTextView.text = "${item.code} - ${item.name}"
 
+
+
+        if(item.code!="ADD_MORE") {
+            if(!item.countryCode.any{it.isDigit()}) {
+                currencyTextView.text = "${item.code} - ${item.name}"
+                val flagUrl = "https://flagcdn.com/w320/${item.countryCode}.png"
+                Glide.with(context).load(flagUrl).into(flagImageView)
+            }
+            else{
+                currencyTextView.text="${item.code} - ${item.name} - ${item.countryCode}"
+            }
+        }
+        else {
+            currencyTextView.text = item.name
+            flagImageView.setImageResource(R.drawable.ic_add)
+        }
         return view
     }
 }
