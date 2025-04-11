@@ -55,7 +55,6 @@ class MainActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { _, insets ->
             val isKeyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             if (!isKeyboardVisible) {
-                // Clear focus from EditTexts when the keyboard is hidden
                 inputNumber1?.clearFocus()
                 inputNumber2?.clearFocus()
             }
@@ -101,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 setupSwapButton(currencyItems)
             } else {
-                Log.d("CurrencyConverter", "Error fetching currencies")
+
             }
         }
     }
@@ -243,4 +242,4 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-//TODO: add ui, show currency rate, if unchecked it canot be changed and it will use the api for conversion, if custom is checked the rate can be changed
+//TODO: add ui, show currency rate, if unchecked it cannot be changed and it will use the api for conversion, if custom is checked the rate can be changed
